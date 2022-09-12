@@ -9,7 +9,14 @@ import axios from 'axios';
 function App() {
   return (
     <div className="App">
-      <Captcha/>
+      {/* no_questions: 1-5 */}
+      {/* question_types: int[] arr, 1 <= len <= 5 */}
+      {/* key: secret string that shares with the backend */}
+      <Captcha 
+        no_questions={4} 
+        question_types={[1, 4, 1, 4]} 
+        key="3c9HZjyy6YfxSWsYzEj2UFgVBvbFbJyzNSd4mtsew"
+      />
     </div>
   );
 }

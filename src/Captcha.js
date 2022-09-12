@@ -4,12 +4,18 @@ import { Buffer } from 'buffer';
 import axios from 'axios';
 import Question from './Question';
 
+// Valid ip addresses for testing
+const TEST_DATA_IP = "56.225.236.44";
+
 const Captcha = (props) => {
     const [pageLoad, setPageLoad] = useState(false);
+    const [info, setInfo] = useState(false);
     const [open, setOpen] = useState(false);
-    const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
+    const [questionLoaded, setQuestionLoaded] = useState(false);
     const [verified, setVerified] = useState(false);
+    const [loadState, setLoadState] = useState('idle');
+    const [quizLoad, setQuizLoad] = useState(false);
     const [question, setQuestion] = useState({
         'type': 0,
         'qid': '',
@@ -19,26 +25,25 @@ const Captcha = (props) => {
         'video': null,
         'question': null
     });
-
+    const circle_loader = useRef();
     async function fetchToken() {
         let data = JSON.stringify({
-            "ip": "56.225.236.44",
-            "no_questions": 3,
-            "question_type": [ 1, 1, 1 ]
+            "ip": TEST_DATA_IP,
+            "no_questions": props.no_questions,
+            "question_type": props.question_types
         });
           
         let config = {
             method: 'post',
-            url: 'http://localhost:5001/api/answer/add',
+            url: 'http://localhost:5001/api/session/add',
             headers: { 
               'Content-Type': 'application/json'
             },
             data : data
         };
-          
+        setError(false);
         axios(config)
         .then(function (response) {
-            console.log(response.data.session);
             if (response.data.session !== "existed") {
                 window.localStorage.clear();
                 let session = response.data.session_id;
@@ -46,7 +51,6 @@ const Captcha = (props) => {
                 console.log("session: " + window.localStorage.getItem('session-token'));
                 setPageLoad(true);
                 setError(false);
-                setLoading(false);
             } else {
                 setPageLoad(true);
             }
@@ -56,39 +60,45 @@ const Captcha = (props) => {
         });
     }
     async function fetchQuestion() {
-        console.log("fetch")
-        setLoading(true);
         let token = window.localStorage.getItem('session-token');
-        let config = {
+        var config = {
             method: 'get',
-            url: 'http://localhost:5001/api/answer/get',
+            url: 'http://localhost:5001/api/session/get',
             headers: { 
-              'session-token': token
-            }
+              'session-token': token,
+              'ip': TEST_DATA_IP, 
+              'Content-Type': 'application/json'
+            },
         };
+          
+        setError(false);
+        setLoadState('loading');
         axios(config)
         .then(function (res) {
+            setError(false);
             const data = res.data;
-            if (res.data.verified) {
+            if (res.data.verified === true) {
                 setOpen(false);
-                setLoading(false);
+                setLoadState('verified');
                 setVerified(true);
                 return;
+            } else {
+                setLoadState('idle');
+                const type = data.question_type;
+                setVerified(false);
+                let obj = {
+                    'type': type,
+                    'qid': data.qid,
+                    'image': (type === 4 ? data.image : null),
+                    'image_list': (type === 3 ? data.image_list : null),
+                    'video': (type === 5 ? data.video : null),
+                    'question': ((type === 1 || type === 4 || type === 5) ? data.question : null),
+                };
+                setQuestion(obj);
+                setQuizLoad(false);
+                setQuestionLoaded(true);
+                setOpen(true);
             }
-            console.log(data);
-            const type = data.question_type;
-            let obj = {
-                'type': type,
-                'qid': data.qid,
-                'image': (type === 4 ? data.image : null),
-                'image_list': (type === 3 ? data.image_list : null),
-                'video': (type === 5 ? data.video : null),
-                'question': ((type === 1 || type === 4 || type === 5) ? data.question : null),
-            };
-            console.log(obj);
-            setQuestion(obj);
-            setLoading(false);
-            setOpen(true);
         })
         .catch(function (error) {
             console.log(error);
@@ -99,33 +109,68 @@ const Captcha = (props) => {
     const handleSubmitType1 = async ( event ) => {
         event.preventDefault();
         console.log(answer);
+        let dupAnswer = answer;
         var data = JSON.stringify({
             "type": 1,
             "qid": question.qid,
-            "answer": answer
+            "answer": dupAnswer
         });
         console.log(data);
-          
         var config = {
             method: 'post',
-            url: 'http://localhost:5001/api/answer/post',
+            url: 'http://localhost:5001/api/session/post',
             headers: { 
               'session-token': window.localStorage.getItem('session-token'), 
               'Content-Type': 'application/json'
             },
             data : data
         };
-          
+        setQuestionLoaded(false);
+        setAnswer('');
+        setQuestion({...question, type: 0, image: null, image_list: [], word_list: [], video: null, question: null})
+        setQuizLoad(true);
+        
         axios(config)
         .then(function (response) {
             if (response) {
+                fetchQuestion();
                 setAnswer('');
+                setQuestion({...question, type: 0, image: null, image_list: [], word_list: [], video: null, question: null})
                 return response;
             }
         })
-        .then(response => {
+    };
+    const handleSubmitType4 = async ( event ) => {
+        event.preventDefault();
+        console.log(answer);
+        let dupAnswer = answer;
+        var data = JSON.stringify({
+            "type": 4,
+            "qid": question.qid,
+            "answer": dupAnswer
+        });
+        console.log(data);
+        var config = {
+            method: 'post',
+            url: 'http://localhost:5001/api/session/post',
+            headers: { 
+              'session-token': window.localStorage.getItem('session-token'), 
+              'Content-Type': 'application/json'
+            },
+            data : data
+        };
+        setQuestionLoaded(false);
+        setAnswer('');
+        setQuestion({...question, type: 0, image: null, image_list: [], word_list: [], video: null, question: null})
+        setQuizLoad(true);
+        
+        axios(config)
+        .then(function (response) {
             if (response) {
-                fetch();
+                fetchQuestion();
+                setAnswer('');
+                setQuestion({...question, type: 0, image: null, image_list: [], word_list: [], video: null, question: null})
+                return response;
             }
         })
     };
@@ -134,43 +179,112 @@ const Captcha = (props) => {
     }, []);
     return (
         <>
-            { pageLoad ? <div>
-                <div className="captcha-outer">
-                    <p className="title">Kaptcha</p>
-                    <span className="info-icon">?</span>
-                    <hr className="line"/>
-                    <div className="captcha-inner" onClick={() => fetchQuestion()}>
-                        { (verified) ? <div className="center"><div class="check"></div></div> : null }
-                        { (loading && verified === false) ? <div className="loading"></div> : null }
+            { pageLoad ? 
+                <div>
+                    <div className="captcha-outer">
+                        <p className="title">Kaptcha</p>
+                        <div class="info" onClick={() => {setInfo(true); setOpen(false)}}>?</div>
+                        <div 
+                            className={`circle-loader ${(loadState === 'loading') ? 'circle-loader-animation' : ''} ${(loadState === 'verified') ? 'circle-loader-animation load-complete' : ''}`} 
+                            onClick={() => {
+                                fetchQuestion();
+                            }}
+                            ref={circle_loader}>
+                                {verified && (loadState === 'verified') ? <div class="checkmark draw"></div> : ''}
+                        </div>
+                        { ( error ) ? 
+                            <div className="error" onClick={() => {
+                                setError(false);
+                                setLoadState('idle'); 
+                                setVerified(false);
+                                setQuestion({...question, type: 0, image: null, image_list: [], word_list: [], video: null, question: null});
+                                fetchToken().then(() => {
+                                    fetchQuestion();
+                                })
+                            }}>
+                                Error. Try Again
+                            </div> 
+                        : null }
                     </div>
-                    <p className="verify" onClick={() => fetchQuestion()}>VERIFY</p>
-                    { (error) ? <div className="error" onClick={async () => {setError(false); setQuestion({...question, type: 0, image: null, image_list: [], word_list: [], video: null, question: null}); await fetchToken(); fetchQuestion();}}>Error. Try Again</div> : null }
-                </div>
-                { open ? 
-                    <div className="c-content">
-                        <div className="modal-content">
-                            <span className="close" onClick={() => {setOpen(false); setQuestion({...question, type: 0, image: null, image_list: [], word_list: [], video: null, question: null})}}>&times;</span>
-                            {/* <Question question={question.question} qid={question.qid} type={question.type} fetch={fetchQuestion}/> */}
-                            <div>
-                                {(question.type === 1) ?
-                                <form onSubmit={handleSubmitType1}>
-                                    <div className="question-type-3">
-                                        <label className="instruction">Read the given question in the gray box and provide answer in the text field.</label>
-                                        <label className="questionLabel">Question:</label>
-                                        <img className="questionImage" src={URL.createObjectURL( new Blob([Buffer.from(question.question, "base64").buffer], { type: 'image/jpg' }) )} alt="generated question"/>
-                                        <label  className="answerTag" htmlFor="answer">Answer:</label>
-                                        <input className="input" type="text" name="answer" placeholder="Sample answers: apple, 4, cake" value={answer} onChange={e => setAnswer(e.target.value)}/>
-                                        <div className="buttonParent">``
-                                            <button className="nextButton" type="submit">NEXT</button>
-                                        </div>
-                                    </div>
-                                </form>
-                                : ''}
+                    { ( open ) ? 
+                        <div className="c-content">
+                            <div className={`modal-content ${(questionLoaded ? 'fadein-animation' : '')}`}>
+                                <span className="close" onClick={() => {
+                                    setLoadState('idle');
+                                    setOpen(false);
+                                    setQuestion({...question, type: 0, image: null, image_list: [], word_list: [], video: null, question: null})
+                                }}>
+                                    &times;
+                                </span>
+                                {/* <Question question={question.question} qid={question.qid} type={question.type} fetch={fetchQuestion}/> */}
+                                <div>
+                                    {quizLoad ? <div className="circle-loader circle-loader-animation load-padding"></div> : null}
+                                    {( question.type === 1 ) ?
+                                        <form onSubmit={handleSubmitType1}>
+                                            <div className={`question-type-1`}>
+                                                <label className="questionLabel">Answer the question</label>
+                                                <label className="instruction">Read the given question in the black box and provide answer in the text field and click next.</label>
+                                                <label className="questionLabel">Question:</label>
+                                                <img className="questionImage" src={URL.createObjectURL( new Blob([Buffer.from(question.question, "base64").buffer], { type: 'image/jpg' }) )} alt="generated question"/>
+                                                <label  className="answerTag" htmlFor="answer">Answer:</label>
+                                                <input className="input" type="text" name="answer" placeholder="Sample answers: apple, 4, cake" value={answer} onChange={e => setAnswer(e.target.value)}/>
+                                                <div className="buttonParent">
+                                                    <button className="nextButton" type="submit">NEXT</button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    : ''}
+                                    {( question.type === 4 ) ?
+                                        <form onSubmit={handleSubmitType4}>
+                                            <div className="question-type-4">
+                                                <label className="instruction">Look at the image, read the given question in the black box and provide answer in the text field.</label>
+                                                <div className="frame"><img className="image" src={URL.createObjectURL( new Blob([Buffer.from(question.image, "base64").buffer], { type: 'image/jpg' }) )} alt="img user look at to decode"/></div>
+                                                <label className="questionLabel">Question:</label>
+                                                <img className="questionImage" src={URL.createObjectURL( new Blob([Buffer.from(question.question, "base64").buffer], { type: 'image/jpg' }) )} alt="generated question"/>
+                                                <label  className="answerTag" htmlFor="answer">Answer:</label>
+                                                <input className="input" type="text" autocomplete="off" name="answer" placeholder="Sample answers: apple, 4, cake" value={answer} onChange={e => setAnswer(e.target.value)}/>
+                                                <div className="buttonParent">
+                                                    <button className="nextButton" type="submit">NEXT</button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    : ''}
+                                    {( question.type === 5 ) ?
+                                        <form onSubmit={handleSubmitType4}>
+                                            <div className="question-type-2">
+                                                <label className="instruction">Read the given question in the black box and provide answer in the text field.</label>
+                                                <label className="questionLabel">Question:</label>
+                                                <img className="questionImage" src={URL.createObjectURL( new Blob([Buffer.from(question.question, "base64").buffer], { type: 'image/jpg' }) )} alt="generated question"/>
+                                                <label  className="answerTag" htmlFor="answer">Answer:</label>
+                                                <input className="input" type="text" autocomplete="off" name="answer" placeholder="Sample answers: apple, 4, cake" value={answer} onChange={e => setAnswer(e.target.value)}/>
+                                                <div className="buttonParent">
+                                                    <button className="nextButton" type="submit">NEXT</button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    : ''}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                : null }
-            </div> : null }
+                    : null }
+                    { ( info ) ? 
+                        <div className="c-content">
+                            <div className="modal-content">
+                                <span className="close" onClick={() => {
+                                    setInfo(false); 
+                                }}>
+                                    &times;
+                                </span>
+                                {/* <Question question={question.question} qid={question.qid} type={question.type} fetch={fetchQuestion}/> */}
+                                <div>
+                                    <h1>Kaptcha Title</h1>
+                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla arcu sapien, placerat eu dui fringilla, scelerisque efficitur leo. Integer tristique commodo dictum. Nunc hendrerit ultrices venenatis. Duis vitae egestas nibh. Nam molestie magna enim, vitae rhoncus eros tempus nec. Vestibulum id aliquet enim. Integer eu ex nec mauris lacinia varius ac eget lectus. Sed sem magna, tincidunt ut lacinia sollicitudin, accumsan nec metus. Interdum et malesuada fames ac ante ipsum primis in faucibus. Pellentesque laoreet risus lacus, vitae interdum ligula efficitur id. Vivamus vitae nibh nisi. Quisque accumsan efficitur gravida. Morbi rhoncus lobortis risus.</p>
+                                </div>
+                            </div>
+                        </div>
+                    : null }
+                </div> 
+            : null }
         </>
     );
 }
