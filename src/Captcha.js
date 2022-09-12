@@ -28,7 +28,7 @@ const Captcha = (props) => {
     const circle_loader = useRef();
     async function fetchToken() {
         let data = JSON.stringify({
-            "ip": TEST_DATA_IP,
+            "ip": localStorage.getItem('ipAddress'),
             "no_questions": props.no_questions,
             "question_type": props.question_types
         });
@@ -48,7 +48,6 @@ const Captcha = (props) => {
                 window.localStorage.clear();
                 let session = response.data.session_id;
                 window.localStorage.setItem('session-token', session);
-                console.log("session: " + window.localStorage.getItem('session-token'));
                 setPageLoad(true);
                 setError(false);
             } else {
@@ -66,7 +65,7 @@ const Captcha = (props) => {
             url: 'http://localhost:5001/api/session/get',
             headers: { 
               'session-token': token,
-              'ip': TEST_DATA_IP, 
+              'ip': localStorage.getItem('ipAddress'), 
               'Content-Type': 'application/json'
             },
         };
@@ -108,14 +107,12 @@ const Captcha = (props) => {
     const [answer, setAnswer] = useState('');
     const handleSubmitType1 = async ( event ) => {
         event.preventDefault();
-        console.log(answer);
         let dupAnswer = answer;
         var data = JSON.stringify({
             "type": 1,
             "qid": question.qid,
             "answer": dupAnswer
         });
-        console.log(data);
         var config = {
             method: 'post',
             url: 'http://localhost:5001/api/session/post',
@@ -142,14 +139,12 @@ const Captcha = (props) => {
     };
     const handleSubmitType4 = async ( event ) => {
         event.preventDefault();
-        console.log(answer);
         let dupAnswer = answer;
         var data = JSON.stringify({
             "type": 4,
             "qid": question.qid,
             "answer": dupAnswer
         });
-        console.log(data);
         var config = {
             method: 'post',
             url: 'http://localhost:5001/api/session/post',
@@ -175,7 +170,18 @@ const Captcha = (props) => {
         })
     };
     useEffect(() => {
-        fetchToken();
+        const fetchUserIP = async () => {
+            const { data: { ip } } = await axios.get("https://www.cloudflare.com/cdn-cgi/trace", {
+                responseType: "text",
+                transformResponse: data =>
+                Object.fromEntries(data.trim().split("\n").map(line => line.split("=")))
+            });
+            localStorage.setItem("ipAddress", ip);
+        }
+        fetchUserIP()
+        .catch(console.error).then(() => {
+            fetchToken();
+        })
     }, []);
     return (
         <>
