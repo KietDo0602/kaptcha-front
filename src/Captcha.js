@@ -2,10 +2,11 @@ import './App.css';
 import React, {useState, useEffect, useRef} from 'react';
 import { Buffer } from 'buffer';
 import axios from 'axios';
-import Question from './Question';
 
-// Valid ip addresses for testing
+// Random valid ip addresses for testing
 const TEST_DATA_IP = "56.225.236.44";
+
+const WEBSITE_URL = "https://enigmatic-meadow-34576.herokuapp.com";
 
 const Captcha = (props) => {
     const [pageLoad, setPageLoad] = useState(false);
@@ -32,12 +33,13 @@ const Captcha = (props) => {
             "no_questions": props.no_questions,
             "question_type": props.question_types
         });
-          
+        
         let config = {
             method: 'post',
-            url: 'http://localhost:5001/api/session/add',
+            url: `${WEBSITE_URL}/api/session/add`,
             headers: { 
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'ip': localStorage.getItem('ipAddress'),
             },
             data : data
         };
@@ -62,14 +64,13 @@ const Captcha = (props) => {
         let token = window.localStorage.getItem('session-token');
         var config = {
             method: 'get',
-            url: 'http://localhost:5001/api/session/get',
+            url: `${WEBSITE_URL}/api/session/get`,
             headers: { 
               'session-token': token,
               'ip': localStorage.getItem('ipAddress'), 
               'Content-Type': 'application/json'
             },
         };
-          
         setError(false);
         setLoadState('loading');
         axios(config)
@@ -77,6 +78,9 @@ const Captcha = (props) => {
             setError(false);
             const data = res.data;
             if (res.data.verified === true) {
+                if (localStorage.getItem('ipAddress') == null) {
+                    fetchUserIP();
+                }
                 setOpen(false);
                 setLoadState('verified');
                 setVerified(true);
@@ -91,7 +95,7 @@ const Captcha = (props) => {
                     'image': (type === 4 ? data.image : null),
                     'image_list': (type === 3 ? data.image_list : null),
                     'video': (type === 5 ? data.video : null),
-                    'question': ((type === 1 || type === 4 || type === 5) ? data.question : null),
+                    'question': ((type === 1 || type === 4 || type === 2) ? data.question : null),
                 };
                 setQuestion(obj);
                 setQuizLoad(false);
@@ -100,6 +104,7 @@ const Captcha = (props) => {
             }
         })
         .catch(function (error) {
+            setOpen(false);
             console.log(error);
             setError(true);
         })
@@ -115,7 +120,7 @@ const Captcha = (props) => {
         });
         var config = {
             method: 'post',
-            url: 'http://localhost:5001/api/session/post',
+            url: `${WEBSITE_URL}/api/session/post`,
             headers: { 
               'session-token': window.localStorage.getItem('session-token'), 
               'Content-Type': 'application/json'
@@ -147,7 +152,7 @@ const Captcha = (props) => {
         });
         var config = {
             method: 'post',
-            url: 'http://localhost:5001/api/session/post',
+            url: `${WEBSITE_URL}/api/session/post`,
             headers: { 
               'session-token': window.localStorage.getItem('session-token'), 
               'Content-Type': 'application/json'
@@ -169,15 +174,51 @@ const Captcha = (props) => {
             }
         })
     };
+    const handleSubmitType2 = async ( event ) => {
+        event.preventDefault();
+        let dupAnswer = answer;
+        var data = JSON.stringify({
+            "type": 2,
+            "qid": question.qid,
+            "answer": dupAnswer
+        });
+        var config = {
+            method: 'post',
+            url: `${WEBSITE_URL}/api/session/post`,
+            headers: { 
+              'session-token': window.localStorage.getItem('session-token'), 
+              'Content-Type': 'application/json'
+            },
+            data : data
+        };
+        setQuestionLoaded(false);
+        setAnswer('');
+        setQuestion({...question, type: 0, image: null, image_list: [], word_list: [], video: null, question: null})
+        setQuizLoad(true);
+        
+        axios(config)
+        .then(function (response) {
+            if (response) {
+                fetchQuestion();
+                setAnswer('');
+                setQuestion({...question, type: 0, image: null, image_list: [], word_list: [], video: null, question: null})
+                return response;
+            }
+        }).catch(err => {
+            setOpen(false);
+            setError(true);
+            console.log(err);
+        })
+    };
+    const fetchUserIP = async () => {
+        const { data: { ip } } = await axios.get("https://www.cloudflare.com/cdn-cgi/trace", {
+            responseType: "text",
+            transformResponse: data =>
+            Object.fromEntries(data.trim().split("\n").map(line => line.split("=")))
+        });
+        localStorage.setItem("ipAddress", ip);
+    }
     useEffect(() => {
-        const fetchUserIP = async () => {
-            const { data: { ip } } = await axios.get("https://www.cloudflare.com/cdn-cgi/trace", {
-                responseType: "text",
-                transformResponse: data =>
-                Object.fromEntries(data.trim().split("\n").map(line => line.split("=")))
-            });
-            localStorage.setItem("ipAddress", ip);
-        }
         fetchUserIP()
         .catch(console.error).then(() => {
             fetchToken();
@@ -189,14 +230,14 @@ const Captcha = (props) => {
                 <div>
                     <div className="captcha-outer">
                         <p className="title">Kaptcha</p>
-                        <div class="info" onClick={() => {setInfo(true); setOpen(false)}}>?</div>
+                        <div className="info" onClick={() => {setInfo(true); setOpen(false)}}>?</div>
                         <div 
                             className={`circle-loader ${(loadState === 'loading') ? 'circle-loader-animation' : ''} ${(loadState === 'verified') ? 'circle-loader-animation load-complete' : ''}`} 
                             onClick={() => {
                                 fetchQuestion();
                             }}
                             ref={circle_loader}>
-                                {verified && (loadState === 'verified') ? <div class="checkmark draw"></div> : ''}
+                                {verified && (loadState === 'verified') ? <div className="checkmark draw"></div> : ''}
                         </div>
                         { ( error ) ? 
                             <div className="error" onClick={() => {
@@ -204,11 +245,22 @@ const Captcha = (props) => {
                                 setLoadState('idle'); 
                                 setVerified(false);
                                 setQuestion({...question, type: 0, image: null, image_list: [], word_list: [], video: null, question: null});
-                                fetchToken().then(() => {
+                                setError(false);
+                                fetchUserIP()
+                                .catch(console.error).then(() => {
+                                    setError(false);
+                                    fetchToken();
+                                }).catch(console.error)
+                                .then(() => {
+                                    setError(false);
                                     fetchQuestion();
+                                }).catch(console.error)
+                                .then(() => {
+                                    setLoadState('idle');
+                                    setError(false);
                                 })
                             }}>
-                                Error. Try Again
+                                Session Expired. Click here to renew cookies
                             </div> 
                         : null }
                     </div>
@@ -255,11 +307,10 @@ const Captcha = (props) => {
                                             </div>
                                         </form>
                                     : ''}
-                                    {( question.type === 5 ) ?
-                                        <form onSubmit={handleSubmitType4}>
+                                    {( question.type === 2 ) ?
+                                        <form onSubmit={handleSubmitType2}>
                                             <div className="question-type-2">
-                                                <label className="instruction">Read the given question in the black box and provide answer in the text field.</label>
-                                                <label className="questionLabel">Question:</label>
+                                                <label className="instruction">Type in these words in the text field.</label>
                                                 <img className="questionImage" src={URL.createObjectURL( new Blob([Buffer.from(question.question, "base64").buffer], { type: 'image/jpg' }) )} alt="generated question"/>
                                                 <label  className="answerTag" htmlFor="answer">Answer:</label>
                                                 <input className="input" type="text" autocomplete="off" name="answer" placeholder="Sample answers: apple, 4, cake" value={answer} onChange={e => setAnswer(e.target.value)}/>
@@ -283,8 +334,8 @@ const Captcha = (props) => {
                                 </span>
                                 {/* <Question question={question.question} qid={question.qid} type={question.type} fetch={fetchQuestion}/> */}
                                 <div>
-                                    <h1>Kaptcha Title</h1>
-                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla arcu sapien, placerat eu dui fringilla, scelerisque efficitur leo. Integer tristique commodo dictum. Nunc hendrerit ultrices venenatis. Duis vitae egestas nibh. Nam molestie magna enim, vitae rhoncus eros tempus nec. Vestibulum id aliquet enim. Integer eu ex nec mauris lacinia varius ac eget lectus. Sed sem magna, tincidunt ut lacinia sollicitudin, accumsan nec metus. Interdum et malesuada fames ac ante ipsum primis in faucibus. Pellentesque laoreet risus lacus, vitae interdum ligula efficitur id. Vivamus vitae nibh nisi. Quisque accumsan efficitur gravida. Morbi rhoncus lobortis risus.</p>
+                                    <h1>Welcome to Kaptcha!</h1>
+                                    <p>Kaptcha is a Captcha service that validates if you are a human or a robot, but mainly focuses on filtering out spam bots. To pass the test, follow the instruction to answer the question and provide the answer in the given text-field.</p>
                                 </div>
                             </div>
                         </div>

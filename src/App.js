@@ -9,13 +9,13 @@ import axios from 'axios';
 function App() {
   return (
     <div className="App">
+      <h1 className="kaptcha-title">Kaptcha</h1>
+      <h2 className="kaptcha-author">Made by <a href="https://github.com/kietdo0602">Kiet</a></h2>
       {/* no_questions: 1-5 */}
       {/* question_types: int[] arr, 1 <= len <= 5 */}
-      {/* key: secret string that shares with the backend */}
       <Captcha 
-        no_questions={4} 
-        question_types={[1, 4, 1, 4]} 
-        key="3c9HZjyy6YfxSWsYzEj2UFgVBvbFbJyzNSd4mtsew"
+        no_questions={3} 
+        question_types={[2, 1, 4]} 
       />
     </div>
   );

@@ -1,3 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800&display=swap');
+
+body {
+  background-color: #cfcfcf;
+}
+
 * {
   margin: 0;
   box-sizing: border-box;
@@ -22,6 +28,19 @@
   --width: 30px;
   --borderColor: #78b13f;
 }
+
+.kaptcha-title {
+  font-size: 3rem;
+  font-family: 'Montserrat', sans-serif;
+  padding: 30px 10px 0px 30px;
+}
+
+.kaptcha-author {
+  font-size: 1.6rem;
+  font-family: 'Montserrat', sans-serif;
+  padding: 10px 0px 0px 40px;
+}
+
 
 .captcha-outer {
   box-sizing: border-box;
@@ -354,7 +373,7 @@
 .modal-content .instruction {
   display: block;
   padding: 10px 0px 25px 0px;
-  color:#888;
+  color:black;
 }
 
 .modal-content .questionLabel {
@@ -362,7 +381,7 @@
   display: block;
   padding: 0 0 10px 0;
   font-weight: bold;
-  color:#757879;
+  color:#000000;
 }
 
 
@@ -379,11 +398,11 @@
   padding: 20px 0px 0px 0px;
   font-weight: bold;
   display: block;
-  color:#888;
+  color:rgb(0, 0, 0);
 }
 
 .modal-content .input {
-  font-size: 18px;
+  font-size: 15px;
   padding: 10px;
   margin: 15px 0;
   width: 100%;
@@ -457,9 +476,10 @@ select {
 
 .captcha-outer .error {
   position: absolute;
-  bottom: -25px;
+  bottom: -50px;
   color: red;
   width: 112px;
+  font-size: 12px;
   left: 0;  
 }
 
