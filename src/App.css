@@ -46,6 +46,13 @@ body {
   padding: 30px 30px 0px 30px;
 }
 
+.page-load {
+  box-sizing: border-box;
+  position: relative;
+  margin: 250px auto;
+  text-align: center;
+}
+
 
 .captcha-outer {
   box-sizing: border-box;
@@ -71,6 +78,7 @@ body {
 
 .info {
   position: absolute;
+  font-weight: bold;
   top: 5px;
   right: 5px;
   font-family: 'Lato', sans-serif;
@@ -310,8 +318,16 @@ body {
   width: 100%; /* Full width */
   height: 100%; /* Full height */
   overflow: auto; /* Enable scroll if needed */
+}
+
+.modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
   background-color: rgb(0,0,0); /* Fallback color */
   background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  height: 100%;
+  width: 100vw;
 }
 
 @keyframes fadeIn {
@@ -500,8 +516,6 @@ select {
   color: black;
 }
 
-.info-content .title {
-}
 
 .c-content .info-content {
   width: 450px;

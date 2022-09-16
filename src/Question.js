@@ -11,35 +11,7 @@ function Question(props) {
     const [loading, setLoading] = useState(false);
     const handleSubmit3 = event => {
         event.preventDefault();
-        console.log(answer1);
-        var data = JSON.stringify({
-            "type": 1,
-            "qid": qid,
-            "answer": answer1
-        });
-          
-        var config = {
-            method: 'post',
-            url: 'http://localhost:5001/api/answer/post',
-            headers: { 
-              'session-token': window.localStorage.getItem('session-token'), 
-              'Content-Type': 'application/json'
-            },
-            data : data
-        };
-          
-        axios(config)
-        .then(function (response) {
-            if (response) {
-                setLoading(true);
-                setAnswer1('');
-                fetch();
-                setLoading(false);
-            }
-        })
-        .catch(function (error) {
-            console.log(error);
-        });
+        
     };
     return (
         <div>

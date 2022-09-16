@@ -49,15 +49,16 @@ const Captcha = (props) => {
                 let session = response.data.session_id;
                 window.localStorage.setItem('session-token', session);
                 setPageLoad(true);
-                setError(false);
             } else {
                 setPageLoad(true);
             }
         })
         .catch(function (error) {
+            setError(true);
             console.log(error);
         });
     }
+
     async function fetchQuestion() {
         let token = window.localStorage.getItem('session-token');
         var config = {
@@ -73,7 +74,6 @@ const Captcha = (props) => {
         setLoadState('loading');
         axios(config)
         .then(function (res) {
-            setError(false);
             const data = res.data;
             if (res.data.verified === true) {
                 if (localStorage.getItem('ipAddress') == null) {
@@ -85,8 +85,8 @@ const Captcha = (props) => {
                 return;
             } else {
                 setLoadState('idle');
-                const type = data.question_type;
                 setVerified(false);
+                const type = data.question_type;
                 let obj = {
                     'type': type,
                     'qid': data.qid,
@@ -100,13 +100,14 @@ const Captcha = (props) => {
                 setQuestionLoaded(true);
                 setOpen(true);
             }
-        })
-        .catch(function (error) {
+        }).catch(function (error) {
             setOpen(false);
-            console.log(error);
             setError(true);
+            console.log(error);
         })
     }
+
+
     const [answer, setAnswer] = useState('');
     const handleSubmitType1 = async ( event ) => {
         event.preventDefault();
@@ -138,6 +139,10 @@ const Captcha = (props) => {
                 setQuestion({...question, type: 0, image: null, image_list: [], word_list: [], video: null, question: null})
                 return response;
             }
+        }).catch(err => {
+            setOpen(false);
+            setError(true);
+            console.log(err);
         })
     };
     const handleSubmitType4 = async ( event ) => {
@@ -170,6 +175,10 @@ const Captcha = (props) => {
                 setQuestion({...question, type: 0, image: null, image_list: [], word_list: [], video: null, question: null})
                 return response;
             }
+        }).catch(err => {
+            setOpen(false);
+            setError(true);
+            console.log(err);
         })
     };
     const handleSubmitType2 = async ( event ) => {
@@ -238,24 +247,15 @@ const Captcha = (props) => {
                                 {verified && (loadState === 'verified') ? <div className="checkmark draw"></div> : ''}
                         </div>
                         { ( error ) ? 
-                            <div className="error" onClick={() => {
+                            <div className="error" onClick={(event) => {
+                                event.preventDefault();
                                 setError(false);
                                 setLoadState('idle'); 
                                 setVerified(false);
                                 setQuestion({...question, type: 0, image: null, image_list: [], word_list: [], video: null, question: null});
-                                setError(false);
                                 fetchUserIP()
-                                .catch(console.error).then(() => {
-                                    setError(false);
+                                .then(() => {
                                     fetchToken();
-                                }).catch(console.error)
-                                .then(() => {
-                                    setError(false);
-                                    fetchQuestion();
-                                }).catch(console.error)
-                                .then(() => {
-                                    setLoadState('idle');
-                                    setError(false);
                                 })
                             }}>
                                 Session Expired. Click here to renew cookies
@@ -264,6 +264,11 @@ const Captcha = (props) => {
                     </div>
                     { ( open ) ? 
                         <div className="c-content">
+                            <div className="modal-backdrop" onClick={() => {
+                                setLoadState('idle');
+                                setOpen(false);
+                                setQuestion({...question, type: 0, image: null, image_list: [], word_list: [], video: null, question: null})
+                            }}></div>
                             <div className={`modal-content ${(questionLoaded ? 'fadein-animation' : '')}`}>
                                 <span className="close" onClick={() => {
                                     setLoadState('idle');
@@ -323,6 +328,9 @@ const Captcha = (props) => {
                     : null }
                     { ( info ) ? 
                         <div className="c-content">
+                            <div className="modal-backdrop" onClick={() => {
+                                setInfo(false);
+                            }}></div>
                             <div className="modal-content info-content">
                                 <span className="close" onClick={() => {
                                     setInfo(false); 
@@ -335,7 +343,7 @@ const Captcha = (props) => {
                         </div>
                     : null }
                 </div> 
-            : null }
+            : <p className="page-load">Loading...</p> }
         </>
     );
 }
