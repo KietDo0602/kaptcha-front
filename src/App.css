@@ -36,9 +36,14 @@ body {
 }
 
 .kaptcha-author {
-  font-size: 1.6rem;
+  font-size: 1.3rem;
   font-family: 'Montserrat', sans-serif;
   padding: 10px 0px 0px 40px;
+}
+
+.kaptcha-desc {
+  font-size: 1rem;
+  padding: 30px 30px 0px 30px;
 }
 
 
@@ -440,7 +445,7 @@ select {
 
 .modal-content .nextButton {
   padding: 10px;
-  font-size: 20px;
+  font-size: 15px;
   background-color: #000;
   color: white;
   border-radius: 3px;
@@ -486,4 +491,18 @@ select {
 .captcha-outer .error:hover {
   cursor: pointer;
   text-decoration: underline;
+}
+
+.info-content .kaptcha-info {
+  display:inline-block;
+  position: relative;
+  padding: 10px;
+  color: black;
+}
+
+.info-content .title {
+}
+
+.c-content .info-content {
+  width: 450px;
 }

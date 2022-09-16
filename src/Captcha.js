@@ -3,10 +3,8 @@ import React, {useState, useEffect, useRef} from 'react';
 import { Buffer } from 'buffer';
 import axios from 'axios';
 
-// Random valid ip addresses for testing
-const TEST_DATA_IP = "56.225.236.44";
-
 const WEBSITE_URL = "https://enigmatic-meadow-34576.herokuapp.com";
+// const WEBSITE_URL = "http://localhost:3000";
 
 const Captcha = (props) => {
     const [pageLoad, setPageLoad] = useState(false);
@@ -274,7 +272,6 @@ const Captcha = (props) => {
                                 }}>
                                     &times;
                                 </span>
-                                {/* <Question question={question.question} qid={question.qid} type={question.type} fetch={fetchQuestion}/> */}
                                 <div>
                                     {quizLoad ? <div className="circle-loader circle-loader-animation load-padding"></div> : null}
                                     {( question.type === 1 ) ?
@@ -326,17 +323,14 @@ const Captcha = (props) => {
                     : null }
                     { ( info ) ? 
                         <div className="c-content">
-                            <div className="modal-content">
+                            <div className="modal-content info-content">
                                 <span className="close" onClick={() => {
                                     setInfo(false); 
                                 }}>
                                     &times;
                                 </span>
-                                {/* <Question question={question.question} qid={question.qid} type={question.type} fetch={fetchQuestion}/> */}
-                                <div>
-                                    <h1>Welcome to Kaptcha!</h1>
-                                    <p>Kaptcha is a Captcha service that validates if you are a human or a robot, but mainly focuses on filtering out spam bots. To pass the test, follow the instruction to answer the question and provide the answer in the given text-field.</p>
-                                </div>
+                                <h1 className="kaptcha-info title">Welcome to Kaptcha!</h1>
+                                <p className="kaptcha-info">Kaptcha is a Captcha service that validates if you are a human or a robot, but mainly focuses on filtering out spam bots. To pass the test, follow the instruction to answer the question and provide the answer in the given text-field.</p>
                             </div>
                         </div>
                     : null }
