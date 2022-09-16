@@ -331,7 +331,7 @@ const Captcha = (props) => {
                             <div className="modal-backdrop" onClick={() => {
                                 setInfo(false);
                             }}></div>
-                            <div className="modal-content info-content">
+                            <div className={`modal-content info-content ${(info ? 'fadein-animation' : '')}`}>
                                 <span className="close" onClick={() => {
                                     setInfo(false); 
                                 }}>
