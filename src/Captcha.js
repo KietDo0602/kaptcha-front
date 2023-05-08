@@ -3,7 +3,7 @@ import React, {useState, useEffect, useRef} from 'react';
 import { Buffer } from 'buffer';
 import axios from 'axios';
 
-const WEBSITE_URL = "https://enigmatic-meadow-34576.herokuapp.com";
+const WEBSITE_URL = "https://backend.kietdo.io";
 // const WEBSITE_URL = "http://localhost:3000";
 
 const Captcha = (props) => {
